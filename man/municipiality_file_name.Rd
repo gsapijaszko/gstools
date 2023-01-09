@@ -4,12 +4,14 @@
 \alias{municipiality_file_name}
 \title{municipiality_file_name() creates and returns file name for municipality}
 \usage{
-municipiality_file_name(municipiality, dir, extension)
+municipiality_file_name(municipiality, dir, type, extension)
 }
 \arguments{
 \item{municipiality}{Municipality name}
 
 \item{dir}{Output directory}
+
+\item{type}{"dem" or "ortho"}
 
 \item{extension}{file extension, default .rds}
 }
