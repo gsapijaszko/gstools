@@ -40,10 +40,10 @@ link_gugik_data_from_archive <- function(url, archive_dir, output_dir) {
 #' @export
 #'
 municipiality_file_name <- function(municipiality, dir, extension = ".rds") {
-  file_name <- paste0({{dir}}, "/", {{municipiality}}, {{extension}}) |>
+  file_name <- stringi::stri_replace_all_regex({{municipiality}}, pattern = "[[:punct:]]", "")
+  file_name <- paste0({{dir}}, "/", file_name, {{extension}}) |>
     iconv(to="ASCII//TRANSLIT") |>
     tolower() |>
-    stringi::stri_replace_all_regex(pattern = "[[:punct:]]", "") |>
     stringi::stri_replace_all_fixed(pattern = " ", replacement = "_")
   return(file_name)
 }
@@ -63,63 +63,73 @@ municipiality_file_name <- function(municipiality, dir, extension = ".rds") {
 #' @export
 #'
 download_gugik_dataset_for_municipality <- function(municipiality, output_dir = "data") {
-  message("Downloading boundaries for ", municipiality)
-
-  dane <- data.frame(wies = character(),
-                     godlo = character(),
-                     akt_rok = integer(),
-                     format = character(),
-                     charPrzest = character(),
-                     bladSrWys = numeric(),
-                     ukladXY = character(),
-                     #modulArch = character(),
-                     ukladH = character(),
-                     #nrZglosz = character(),
-                     czy_ark_wypelniony = character(),
-                     #daneAktualne = integer(),
-                     #lok_nmt = character(),
-                     url_do_pobrania = character(),
-                     nazwa_pliku = character(),
-                     #idNmt = integer(),
-                     idSerie = integer(),
-                     sha1 = character(),
-                     asortyment = character()
-  )
-
-  bb <- osmdata::getbb(paste0("gmina ", {{municipiality}}))
-
-  gr_adm <- osmdata::opq(bb, timeout = 60) |>
-    osmdata::add_osm_features(
-      features = c(
-        "\"boundary\"= \"administrative\""
-      )
-    ) |> osmdata::osmdata_sf() |>
-    osmdata::unique_osmdata()
-
-  gr_gminy <- gr_adm$osm_multipolygons |>
-    subset(admin_level == "7" & name == paste("gmina", municipiality)) |>
-    subset(select = "name")
-
-  gr_wsi <- gr_adm$osm_multipolygons |>
-    subset(admin_level == "8") |>
-    sf::st_join(gr_gminy, join = sf::st_within, left = FALSE) |>
-    dplyr::arrange("name.x") |>
-    subset(select = c("name.x")) |>
-    stats::setNames(c("name", "geometry"))
-
-  if(nrow(gr_wsi) == 0) {
-    message("There is no village boundaries within geometry of ", municipiality, " municipiality.\n")
-    message("Please consider using 'county' parameter")
+  .output_file_name <- municipiality_file_name(municipiality, output_dir, extension = ".rds")
+  if(file.exists(.output_file_name) & difftime(Sys.time(), file.mtime(.output_file_name), units = "days") < 30) {
+    message("File for ", {{municipiality}}, " exists")
   } else {
-    for (j in 1:nrow(gr_wsi)) {
-      print(gr_wsi[j,])
-      data <- .DEM_request(gr_wsi[j,])
-      dane <- cbind(data, wies = rep(gr_wsi[j, ]$name, nrow(data))) |>
-        rbind(dane)
-      print(nrow(dane))
+    message("Downloading boundaries for ", municipiality)
+
+    dane <- data.frame(wies = character(),
+                       godlo = character(),
+                       akt_rok = integer(),
+                       format = character(),
+                       charPrzest = character(),
+                       bladSrWys = numeric(),
+                       ukladXY = character(),
+                       #modulArch = character(),
+                       ukladH = character(),
+                       #nrZglosz = character(),
+                       czy_ark_wypelniony = character(),
+                       #daneAktualne = integer(),
+                       #lok_nmt = character(),
+                       url_do_pobrania = character(),
+                       nazwa_pliku = character(),
+                       #idNmt = integer(),
+                       idSerie = integer(),
+                       sha1 = character(),
+                       asortyment = character()
+    )
+
+    bb <- osmdata::getbb(paste0("gmina ", {{municipiality}}))
+
+    gr_adm <- osmdata::opq(bb, timeout = 60) |>
+      osmdata::add_osm_features(
+        features = c(
+          "\"boundary\"= \"administrative\""
+        )
+      ) |> osmdata::osmdata_sf() |>
+      osmdata::unique_osmdata()
+
+    if(grepl(",", {{municipiality}})) {
+      mun <- stringi::stri_extract_first_regex({{municipiality}}, "^[[:alpha:]]+")
+    } else {
+      mun <- {{municipiality}}
     }
-    if(!dir.exists({{output_dir}})) {dir.create({{output_dir}}, recursive = TRUE)}
-    saveRDS(dane, file = municipiality_file_name(municipiality, output_dir, extension = ".rds"))
+
+    gr_gminy <- gr_adm$osm_multipolygons |>
+      subset(admin_level == "7" & name == paste("gmina", mun)) |>
+      subset(select = "name")
+
+    gr_wsi <- gr_adm$osm_multipolygons |>
+      subset(admin_level == "8") |>
+      sf::st_join(gr_gminy, join = sf::st_within, left = FALSE) |>
+      dplyr::arrange("name.x") |>
+      subset(select = c("name.x")) |>
+      stats::setNames(c("name", "geometry"))
+
+    if(nrow(gr_wsi) == 0) {
+      message("There is no village boundaries within geometry of ", municipiality, " municipiality.\n")
+    } else {
+      for (j in 1:nrow(gr_wsi)) {
+        print(gr_wsi[j,])
+        data <- .DEM_request(gr_wsi[j,])
+        dane <- cbind(data, wies = rep(gr_wsi[j, ]$name, nrow(data))) |>
+          rbind(dane)
+        print(nrow(dane))
+      }
+      if(!dir.exists({{output_dir}})) {dir.create({{output_dir}}, recursive = TRUE)}
+      saveRDS(dane, file = municipiality_file_name(municipiality, output_dir, extension = ".rds"))
+    }
   }
 }
 
