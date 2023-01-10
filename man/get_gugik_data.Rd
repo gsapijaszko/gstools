@@ -4,10 +4,12 @@
 \alias{get_gugik_data}
 \title{Downloads gugiik data to specific folder using wget}
 \usage{
-get_gugik_data(url, output_dir)
+get_gugik_data(url, sha, output_dir)
 }
 \arguments{
 \item{url}{url from GUGiK}
+
+\item{sha}{optionally sha1 of the file}
 
 \item{output_dir}{local folder to store data}
 }

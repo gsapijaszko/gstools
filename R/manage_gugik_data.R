@@ -26,26 +26,48 @@ link_gugik_data_from_archive <- function(url, archive_dir, output_dir) {
 #' municipiality_file_name() creates and returns file name for municipality
 #' @importFrom stringi stri_replace_all_regex stri_replace_all_fixed
 #'
-#' @param municipiality Municipality name
+#' @param name Municipality name
 #' @param dir Output directory
-#' @param type "dem" or "ortho"
+#' @param prefix optional prefix to file name, like prefix_filename.ext
+#' @param suffix optional suffix to file name, like filename_suffix.ext
 #' @param extension file extension, default .rds
 #'
 #' @return file_name Name of file to read / write data
 #'
-#' @usage municipiality_file_name(municipiality, dir, type, extension)
+#' @usage format_file_name(name, dir, prefix, suffix, extension)
 #'
-#' @examples municipiality_file_name("Oborniki Śląskie", "data")
-#' @examples municipiality_file_name("Oborniki Śląskie", "data", extension = ".csv")
+#' @examples format_file_name("Oborniki Śląskie", "data")
+#' @examples format_file_name("Oborniki Śląskie", "data", extension = ".csv")
 #'
 #' @export
 #'
-municipiality_file_name <- function(municipiality, dir, type = "dem", extension = ".rds") {
-  file_name <- stringi::stri_replace_all_regex({{municipiality}}, pattern = "[[:punct:]]", "")
-  file_name <- paste0({{dir}}, "/", file_name, "_", {{type}}, {{extension}}) |>
+format_file_name <- function(name, dir, prefix = "", suffix = "", extension = ".rds") {
+  if(nchar(prefix) > 0) {
+    file_name <- paste0({{prefix}}, "_")
+  } else {
+    file_name <- ""
+  }
+
+  file_name <- paste0(file_name, {{name}})
+
+  file_name <- stringi::stri_replace_all_regex(file_name, pattern = "[[:punct:]]", "")
+
+  if(nchar(suffix) > 0) {
+    file_name <- paste0(file_name, "_", {{suffix}})
+  }
+
+  if(!grepl("^\\.", {{extension}})) {
+    .ext <- paste0(".", {{extension}})
+  } else {
+    .ext <- {{extension}}
+  }
+
+  file_name <- paste0({{dir}}, "/", file_name, .ext) |>
     iconv(to="ASCII//TRANSLIT") |>
     tolower() |>
-    stringi::stri_replace_all_fixed(pattern = " ", replacement = "_")
+    stringi::stri_replace_all_fixed(pattern = " ", replacement = "_") |>
+    stringi::stri_replace_all_regex(pattern = "\\_+", replacement = "_")
+
   return(file_name)
 }
 
@@ -65,7 +87,7 @@ municipiality_file_name <- function(municipiality, dir, type = "dem", extension 
 #' @export
 #'
 download_gugik_dataset_for_municipality <- function(municipiality, output_dir = "data") {
-  .output_file_name <- municipiality_file_name(municipiality, output_dir, type = "dem", extension = ".rds")
+  .output_file_name <- format_file_name(municipiality, output_dir, suffix = "dem", extension = ".rds")
   if(file.exists(.output_file_name) & difftime(Sys.time(), file.mtime(.output_file_name), units = "days") < 30) {
     message("File for ", {{municipiality}}, " exists")
   } else {
@@ -158,8 +180,8 @@ download_gugik_dataset_for_municipality <- function(municipiality, output_dir = 
         message("# Ortho images: ", nrow(dane_ortho))
       }
       if(!dir.exists({{output_dir}})) {dir.create({{output_dir}}, recursive = TRUE)}
-      saveRDS(dane, file = municipiality_file_name(municipiality, type = "dem", output_dir))
-      saveRDS(dane_ortho, file = municipiality_file_name(municipiality, type = "ortho", output_dir))
+      saveRDS(dane, file = format_file_name(municipiality, suffix = "dem", output_dir))
+      saveRDS(dane_ortho, file = format_file_name(municipiality, suffix = "ortho", output_dir))
     }
   }
 }
@@ -169,24 +191,33 @@ download_gugik_dataset_for_municipality <- function(municipiality, output_dir = 
 #'
 #' @importFrom httr parse_url
 #' @importFrom utils download.file
+#' @importFrom openssl sha1
 #' @param url url from GUGiK
+#' @param sha optionally sha1 of the file
 #' @param output_dir local folder to store data
 #'
 #' @export
 #'
-#' @usage get_gugik_data(url, output_dir)
+#' @usage get_gugik_data(url, sha, output_dir)
 #'
-get_gugik_data = function(url, output_dir) {
+#'
+get_gugik_data = function(url, sha = "", output_dir) {
   path = httr::parse_url({{url}})$path
   output_dir <- paste0({{output_dir}}, "/", dirname(path))
   if(!dir.exists(output_dir)) {dir.create(output_dir, recursive = TRUE)}
-  c <- try(utils::download.file(url, destfile = paste0(output_dir, "/", basename(path)),
-                         method = "wget", extra = "-c --progress=bar:force -T 5 -t 2"))
+  destination_file <- paste0(output_dir, "/", basename(path))
+  if(file.exists(destination_file) & as.character(openssl::sha1(file(destination_file))) == {{sha}}) {
+    message("File already exists, not downloading")
+  } else {
 
-  if(inherits(c, "try-error")) {
-    message("Got an error during downloading")
-  } else {}
+    c <- try(utils::download.file(url, destfile = destination_file,
+                           method = "wget", extra = "-c --progress=bar:force -T 5 -t 2"))
+
+    if(inherits(c, "try-error")) {
+      message("Got an error during downloading")
+    } else {}
   Sys.sleep(1)
+  }
 }
 
 

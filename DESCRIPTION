@@ -13,9 +13,8 @@ Imports:
     httr,
     rgugik,
     stringi,
-    terra,
     sf,
-    jsonlite,
+    openssl,
     dplyr,
     osmdata
     
