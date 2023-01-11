@@ -17,9 +17,14 @@ link_gugik_data_from_archive <- function(url, archive_dir, output_dir) {
   path <- httr::parse_url({{url}})$path
   source_file <- paste0({{archive_dir}}, "/", path)
   dest_file <- paste0({{output_dir}}, "/", basename(path))
-  message("Linking ", basename(path), " to ", dest_file)
-  # file.copy(from = source_file, to = dest_file)
-  file.symlink(from = source_file, to = dest_file)
+  if(!file.exists(source_file)) {
+    message("Seems the file is not downloaded yet. Trying to download:")
+    get_gugik_data({{url}}, sha = "", {{archive_dir}})
+    } else {
+      message("Linking ", basename(path), " to ", dest_file)
+      # file.copy(from = source_file, to = dest_file)
+      file.symlink(from = source_file, to = dest_file)
+  }
 }
 
 
