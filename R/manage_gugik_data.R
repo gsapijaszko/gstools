@@ -211,7 +211,7 @@ get_gugik_data = function(url, sha = "", output_dir) {
   output_dir <- paste0({{output_dir}}, "/", dirname(path))
   if(!dir.exists(output_dir)) {dir.create(output_dir, recursive = TRUE)}
   destination_file <- paste0(output_dir, "/", basename(path))
-  if(file.exists(destination_file) && as.character(openssl::sha1(file(destination_file))) == {{sha}}) {
+  if(!is.na(sha) && file.exists(destination_file) && as.character(openssl::sha1(file(destination_file))) == {{sha}}) {
     message("File already exists, not downloading")
   } else {
 
