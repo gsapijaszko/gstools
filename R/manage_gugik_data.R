@@ -211,18 +211,16 @@ get_gugik_data = function(url, sha = "", output_dir) {
   output_dir <- paste0({{output_dir}}, "/", dirname(path))
   if(!dir.exists(output_dir)) {dir.create(output_dir, recursive = TRUE)}
   destination_file <- paste0(output_dir, "/", basename(path))
-  if(file.exists(destination_file) & as.character(openssl::sha1(file(destination_file))) == {{sha}}) {
+  if(file.exists(destination_file) && as.character(openssl::sha1(file(destination_file))) == {{sha}}) {
     message("File already exists, not downloading")
   } else {
 
-    c <- try(utils::download.file(url, destfile = destination_file,
-                           method = "wget", extra = "-c --progress=bar:force -T 5 -t 2"))
+    c <- try(utils::download.file(url, destfile = destination_file, mode = "wb",
+                                  method = "wget", extra = "-c --progress=bar:force -T 5 -t 2"))
 
     if(inherits(c, "try-error")) {
       message("Got an error during downloading")
     } else {}
-  Sys.sleep(1)
+    Sys.sleep(1)
   }
 }
-
-
