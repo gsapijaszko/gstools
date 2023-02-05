@@ -214,6 +214,9 @@ get_gugik_data = function(url, sha = "", output_dir) {
   if(!is.na(sha) && file.exists(destination_file) && as.character(openssl::sha1(file(destination_file))) == {{sha}}) {
     message("File already exists, not downloading")
   } else {
+    if(file.exists(destination_file) && file.size(destination_file) == 0L) {
+      unlink(destination_file)
+    }
 
     c <- try(utils::download.file(url, destfile = destination_file, mode = "wb",
                                   method = "wget", extra = "-c --progress=bar:force -T 5 -t 2"))
