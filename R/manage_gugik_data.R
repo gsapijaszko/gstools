@@ -215,7 +215,7 @@ get_gugik_data = function(url, sha = "", output_dir) {
     message("File already exists, not downloading")
   } else {
     if(file.exists(destination_file) && file.size(destination_file) == 0L) {
-      unlink(destination_file)
+      file.remove(destination_file)
     }
 
     c <- try(utils::download.file(url, destfile = destination_file, mode = "wb",
