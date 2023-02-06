@@ -215,6 +215,7 @@ get_gugik_data = function(url, sha = "", output_dir) {
     message("File already exists, not downloading")
   } else {
     if(file.exists(destination_file) && file.size(destination_file) == 0L) {
+      message("Removing file ", destination_file)
       file.remove(destination_file)
     }
 
