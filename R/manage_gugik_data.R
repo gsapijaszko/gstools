@@ -17,7 +17,7 @@ link_gugik_data_from_archive <- function(url, archive_dir, output_dir) {
   path <- httr::parse_url({{url}})$path
   source_file <- paste0({{archive_dir}}, "/", path)
   dest_file <- paste0({{output_dir}}, "/", basename(path))
-  if(!file.exists(source_file)) {
+  if(!file.exists(source_file) || file.size(source_file) == 0L) {
     message("Seems the file is not downloaded yet. Trying to download:")
     get_gugik_data({{url}}, sha = "", {{archive_dir}})
     } else {

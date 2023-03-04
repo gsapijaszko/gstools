@@ -16,6 +16,7 @@ Imports:
     sf,
     jsonlite,
     terra,
+    lidR,
     openssl,
     dplyr,
     osmdata
