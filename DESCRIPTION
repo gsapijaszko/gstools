@@ -14,6 +14,8 @@ Imports:
     rgugik,
     stringi,
     sf,
+    jsonlite,
+    terra,
     openssl,
     dplyr,
     osmdata

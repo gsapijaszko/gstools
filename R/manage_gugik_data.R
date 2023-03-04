@@ -173,13 +173,14 @@ download_gugik_dataset_for_municipality <- function(municipiality, output_dir = 
     } else {
       for (j in 1:nrow(gr_wsi)) {
         print(gr_wsi[j,])
-        # data <- .DEM_request(gr_wsi[j,])
-        data <- rgugik::DEM_request(gr_wsi[j,])
+        data <- .DEM_request(gr_wsi[j,])
+        # data <- rgugik::DEM_request(gr_wsi[j,])
         dane <- cbind(data, wies = rep(gr_wsi[j, ]$name, nrow(data))) |>
           rbind(dane)
         message("# of DEM data files: ", nrow(dane))
 
-        data_ortho <- rgugik::ortho_request(gr_wsi[j,])
+        # data_ortho <- rgugik::ortho_request(gr_wsi[j,])
+        data_ortho <- .ortho_request(gr_wsi[j,])
         dane_ortho <- cbind(data_ortho, wies = rep(gr_wsi[j, ]$name, nrow(data_ortho))) |>
           rbind(dane_ortho)
         message("# Ortho images: ", nrow(dane_ortho))
