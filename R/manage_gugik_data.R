@@ -145,7 +145,10 @@ download_gugik_dataset_for_municipality <- function(municipiality, output_dir = 
     if(inherits(bb, "try-error")) {
       message("Got an error during downloading")
       bb <- try(osmdata::getbb({{municipiality}}))
-    } else {}
+      .name <- mun
+    } else {
+      .name <- paste("gmina", mun)
+    }
 
     gr_adm <- osmdata::opq(bb, timeout = 60) |>
       osmdata::add_osm_features(
@@ -162,7 +165,7 @@ download_gugik_dataset_for_municipality <- function(municipiality, output_dir = 
     }
 
     gr_gminy <- gr_adm$osm_multipolygons |>
-      subset(admin_level == "7" & name == paste("gmina", mun)) |>
+      subset(admin_level == "7" & name == .name) |>
       subset(select = "name")
 
     gr_wsi <- gr_adm$osm_multipolygons |>
