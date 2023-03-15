@@ -141,7 +141,11 @@ download_gugik_dataset_for_municipality <- function(municipiality, output_dir = 
                           wies = character()
     )
 
-    bb <- osmdata::getbb(paste0("gmina ", {{municipiality}}))
+    bb <- try(osmdata::getbb(paste0("gmina ", {{municipiality}})))
+    if(inherits(bb, "try-error")) {
+      message("Got an error during downloading")
+      bb <- try(osmdata::getbb({{municipiality}}))
+    } else {}
 
     gr_adm <- osmdata::opq(bb, timeout = 60) |>
       osmdata::add_osm_features(
