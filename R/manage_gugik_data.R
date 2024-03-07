@@ -46,7 +46,7 @@ link_gugik_data_from_archive <- function(url, archive_dir, output_dir) {
 #'
 #' @export
 #'
-format_file_name <- function(name, dir, prefix = "", suffix = "", extension = ".rds") {
+format_file_name <- function(name, dir = NULL, prefix = "", suffix = "", extension = ".rds") {
   if(nchar(prefix) > 0) {
     file_name <- paste0({{prefix}}, "_")
   } else {
@@ -67,7 +67,13 @@ format_file_name <- function(name, dir, prefix = "", suffix = "", extension = ".
     .ext <- {{extension}}
   }
 
-  file_name <- paste0({{dir}}, "/", file_name, .ext) |>
+  if(is.null({{dir}})) {
+    file_name <- paste0(file_name, .ext)
+  } else {
+    file_name <- paste0({{dir}}, "/", file_name, .ext)
+  }
+
+  file_name <- file_name |>
     iconv(to="ASCII//TRANSLIT") |>
     tolower() |>
     stringi::stri_replace_all_fixed(pattern = " ", replacement = "_") |>
