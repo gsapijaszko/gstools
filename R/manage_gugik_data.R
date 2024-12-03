@@ -234,7 +234,7 @@ get_gugik_data = function(url, sha = "", output_dir) {
     }
 
     c <- try(utils::download.file(url, destfile = destination_file, mode = "wb",
-                                  method = "wget", extra = "--no-check-certificate -c --progress=bar:force -T 5 -t 3"))
+                                  method = "wget", extra = "--no-check-certificate -c --progress=bar:force -T 120 -t 3"))
 
     if(inherits(c, "try-error")) {
       message("Got an error during downloading")
